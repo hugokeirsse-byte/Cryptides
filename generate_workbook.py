@@ -16,6 +16,35 @@ from reportlab.platypus import (
     HRFlowable, PageBreak, Flowable,
 )
 from reportlab.lib.units import inch as IN
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+# ── Unicode-capable font registration ─────────────────────────────────────────
+# Liberation fonts are metric-compatible with Helvetica/Times (same char widths)
+# so the layout is unchanged, but all Unicode characters now render correctly.
+_LIB = "/usr/share/fonts/truetype/liberation"
+_DJV = "/usr/share/fonts/truetype/dejavu"
+
+pdfmetrics.registerFont(TTFont("Helvetica",             f"{_LIB}/LiberationSans-Regular.ttf"))
+pdfmetrics.registerFont(TTFont("Helvetica-Bold",        f"{_LIB}/LiberationSans-Bold.ttf"))
+pdfmetrics.registerFont(TTFont("Helvetica-Oblique",     f"{_LIB}/LiberationSans-Italic.ttf"))
+pdfmetrics.registerFont(TTFont("Helvetica-BoldOblique", f"{_LIB}/LiberationSans-BoldItalic.ttf"))
+pdfmetrics.registerFont(TTFont("Times-Roman",           f"{_LIB}/LiberationSerif-Regular.ttf"))
+pdfmetrics.registerFont(TTFont("Times-Bold",            f"{_LIB}/LiberationSerif-Bold.ttf"))
+pdfmetrics.registerFont(TTFont("Times-Italic",          f"{_LIB}/LiberationSerif-Italic.ttf"))
+pdfmetrics.registerFont(TTFont("Times-BoldItalic",      f"{_LIB}/LiberationSerif-BoldItalic.ttf"))
+
+# Register font families so <b> and <i> XML tags in Paragraphs resolve correctly
+pdfmetrics.registerFontFamily(
+    "Helvetica",
+    normal="Helvetica", bold="Helvetica-Bold",
+    italic="Helvetica-Oblique", boldItalic="Helvetica-BoldOblique",
+)
+pdfmetrics.registerFontFamily(
+    "Times-Roman",
+    normal="Times-Roman", bold="Times-Bold",
+    italic="Times-Italic", boldItalic="Times-BoldItalic",
+)
 
 # ── Page geometry ──────────────────────────────────────────────────────────────
 PAGE_W   = 6   * IN
