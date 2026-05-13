@@ -229,8 +229,19 @@ def generate_cover(filename="Cover_Jargon_Breaker.pdf",
     cv.rect(0, 0, TOTAL_W, TOTAL_H, fill=1, stroke=0)
 
     draw_back( cv, BK_X,      CT_Y, BK_W,    CT_H, img_path=back_image)
-    draw_spine(cv, X_SPINE_L, CT_Y, SPINE_W, CT_H)
     draw_front(cv, FR_X,      CT_Y, FR_W,    CT_H, img_path=front_image)
+
+    # ── Gutter safety strips — KDP requires ≥ 9.525 mm (≈ 27 pt) clear of spine ──
+    # Cover images extend to the spine fold; we overlay a navy strip on each
+    # spine-adjacent edge so no image content sits in the gutter safe zone.
+    GUTTER_SAFE = 0.40 * IN   # 28.8 pt > 27.14 pt KDP minimum (9.525 mm)
+    cv.setFillColor(NAVY_DARK)
+    # Back panel: right edge = spine fold → clear rightmost 0.40"
+    cv.rect(X_SPINE_L - GUTTER_SAFE, 0, GUTTER_SAFE + 1, TOTAL_H, fill=1, stroke=0)
+    # Front panel: left edge = spine fold → clear leftmost 0.40"
+    cv.rect(X_FRONT_L, 0, GUTTER_SAFE + 1, TOTAL_H, fill=1, stroke=0)
+
+    draw_spine(cv, X_SPINE_L, CT_Y, SPINE_W, CT_H)
 
     if guides:
         trim_guides(cv)

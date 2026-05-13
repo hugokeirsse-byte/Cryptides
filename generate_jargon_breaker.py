@@ -201,15 +201,15 @@ def complexity_gauge(c, x, y, level):
 
 
 def page_footer(c, page_num, total_pages=120):
-    """Minimal footer: page number + thin rule."""
+    """Minimal footer: page number + thin rule — kept above KDP 0.25" safe area."""
     c.saveState()
     c.setStrokeColor(C_PALE)
     c.setLineWidth(0.4)
-    fy = MB * 0.45
+    fy = MB - 5          # ≈ 38 pt from page bottom (safe: KDP min = bleed+0.25" ≈ 27 pt)
     c.line(ML, fy, PAGE_W - MR, fy)
     c.setFont("Mono", 6.5)
     c.setFillColor(C_LIGHT)
-    c.drawRightString(PAGE_W - MR, fy - 9, f"{page_num} / {total_pages}")
+    c.drawRightString(PAGE_W - MR, fy - 8, f"{page_num} / {total_pages}")
     c.restoreState()
 
 
@@ -218,19 +218,19 @@ def page_footer(c, page_num, total_pages=120):
 def draw_title_page(c):
     c.saveState()
 
-    # Full-bleed grid background
-    dot_grid(c, 0, 0, PAGE_W, PAGE_H, spacing=18, r=0.7)
+    # Grid background — kept within content area (no bleed overflow)
+    dot_grid(c, CX, CY, CW, CH, spacing=18, r=0.7)
 
-    # Top border bar
+    # Top border bar (within content area)
     c.setFillColor(C_BLACK)
-    c.rect(0, PAGE_H - 28, PAGE_W, 28, fill=1, stroke=0)
+    c.rect(CX, CY + CH - 22, CW, 22, fill=1, stroke=0)
     c.setFillColor(white)
     c.setFont("Mono", 8)
-    c.drawCentredString(PAGE_W / 2, PAGE_H - 18,
+    c.drawCentredString(PAGE_W / 2, CY + CH - 12,
                         "[ COGNITIVE DECONSTRUCTION WORKBOOK — SERIES 01 ]")
 
     # Main title block
-    ty = PAGE_H * 0.68
+    ty = CY + CH * 0.68
     c.setFont("HelvB", 32)
     c.setFillColor(C_BLACK)
     c.drawCentredString(PAGE_W / 2, ty, "THE JARGON")
@@ -254,7 +254,7 @@ def draw_title_page(c):
     bx = ML + CW * 0.08
     bw = CW * 0.84
     bh = 66
-    by = PAGE_H * 0.33
+    by = CY + CH * 0.33
     c.setLineWidth(0.5)
     c.setStrokeColor(C_BLACK)
     c.rect(bx, by, bw, bh, fill=0, stroke=1)
@@ -270,19 +270,19 @@ def draw_title_page(c):
         c.drawCentredString(PAGE_W / 2, by + bh - 18 - i * 16, line)
 
     # Stats strip
-    sy = PAGE_H * 0.20
+    sy = CY + CH * 0.20
     c.setFont("MonoB", 8)
     c.setFillColor(C_BLACK)
     stats = ["95 SESSIONS", "|", "19 WEEKLY DEBRIEFS", "|", "6 × 9 IN"]
     full = "  ".join(stats)
     c.drawCentredString(PAGE_W / 2, sy, full)
 
-    # Bottom border bar
+    # Bottom border bar (within content area)
     c.setFillColor(C_BLACK)
-    c.rect(0, 0, PAGE_W, 20, fill=1, stroke=0)
+    c.rect(CX, CY, CW, 16, fill=1, stroke=0)
     c.setFillColor(white)
     c.setFont("Mono", 6.5)
-    c.drawCentredString(PAGE_W / 2, 6, "SIMPLICITY IS THE ULTIMATE SOPHISTICATION")
+    c.drawCentredString(PAGE_W / 2, CY + 5, "SIMPLICITY IS THE ULTIMATE SOPHISTICATION")
 
     c.restoreState()
 
@@ -791,18 +791,18 @@ def draw_debrief_page(c, debrief_num, s_start, s_end, page_num):
 
 def draw_conclusion_page(c, page_num):
     c.saveState()
-    dot_grid(c, 0, 0, PAGE_W, PAGE_H, spacing=16, r=0.6)
+    dot_grid(c, CX, CY, CW, CH, spacing=16, r=0.6)
 
-    # Top bar
+    # Top bar (within content area)
     c.setFillColor(C_BLACK)
-    c.rect(0, PAGE_H - 28, PAGE_W, 28, fill=1, stroke=0)
+    c.rect(CX, CY + CH - 22, CW, 22, fill=1, stroke=0)
     c.setFillColor(white)
     c.setFont("MonoB", 9)
-    c.drawCentredString(PAGE_W / 2, PAGE_H - 16,
+    c.drawCentredString(PAGE_W / 2, CY + CH - 12,
                         "[ PROTOCOL COMPLETE ]")
 
     # Main message
-    ty = PAGE_H * 0.65
+    ty = CY + CH * 0.65
     c.setFont("HelvB", 18)
     c.setFillColor(C_BLACK)
     c.drawCentredString(PAGE_W / 2, ty, "YOU HAVE BROKEN")
@@ -819,7 +819,7 @@ def draw_conclusion_page(c, page_num):
     bx = ML + CW * 0.06
     bw = CW * 0.88
     bh = 90
-    by = PAGE_H * 0.28
+    by = CY + CH * 0.28
     c.setLineWidth(1)
     c.setStrokeColor(C_BLACK)
     c.rect(bx, by, bw, bh, fill=0, stroke=1)
@@ -840,12 +840,12 @@ def draw_conclusion_page(c, page_num):
     c.drawCentredString(PAGE_W / 2, by + 14, "Date: ___________________")
     c.drawCentredString(PAGE_W / 2, by + 28, "Signed: _______________________________")
 
-    # Bottom
+    # Bottom bar (within content area)
     c.setFillColor(C_BLACK)
-    c.rect(0, 0, PAGE_W, 22, fill=1, stroke=0)
+    c.rect(CX, CY, CW, 16, fill=1, stroke=0)
     c.setFillColor(white)
     c.setFont("Mono", 7)
-    c.drawCentredString(PAGE_W / 2, 7,
+    c.drawCentredString(PAGE_W / 2, CY + 5,
                         "SIMPLICITY IS THE ULTIMATE SOPHISTICATION — REVISIT. REFINE. REPEAT.")
 
     page_footer(c, page_num)
