@@ -1,0 +1,36 @@
+!pip install requests -q
+
+import os, time, requests, zipfile
+
+API_URL = "https://commons.wikimedia.org/w/api.php"
+HEADERS = {"User-Agent": "MirabiliaBot/1.0"}
+OUT_DIR = "kohler_images"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+params = {"action":"query","list":"categorymembers","cmtitle":"Category:Köhler's Medizinal-Pflanzen","cmtype":"file","cmlimit":500,"format":"json"}
+files = []
+while True:
+    r = requests.get(API_URL, params=params, headers=HEADERS).json()
+    files.extend(r["query"]["categorymembers"])
+    if "continue" not in r: break
+    params["cmcontinue"] = r["continue"]["cmcontinue"]
+
+print(f"{len(files)} images trouvées")
+
+for i, f in enumerate(files, 1):
+    title = f["title"]
+    fname = title.replace("File:","").replace("/","_")
+    out = os.path.join(OUT_DIR, fname)
+    if os.path.exists(out): continue
+    url = requests.get(API_URL, params={"action":"query","titles":title,"prop":"imageinfo","iiprop":"url","format":"json"}, headers=HEADERS).json()
+    url = next(iter(url["query"]["pages"].values()))["imageinfo"][0]["url"]
+    with open(out,"wb") as fh: fh.write(requests.get(url, headers=HEADERS).content)
+    if i % 10 == 0: print(f"{i}/{len(files)}...")
+    time.sleep(0.5)
+
+with zipfile.ZipFile("kohler_images.zip","w") as z:
+    for f in os.listdir(OUT_DIR): z.write(os.path.join(OUT_DIR,f), f)
+print("ZIP prêt !")
+
+from google.colab import files
+files.download("kohler_images.zip")
