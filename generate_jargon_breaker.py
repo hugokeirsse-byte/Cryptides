@@ -315,12 +315,12 @@ def draw_manifesto_page(c, page_num):
     c.saveState()
     dot_grid(c, ML, MB, CW, CH, spacing=14, r=0.55)
 
-    # Header
+    # Header (kept fully within content area — CH+MB is the safe-area ceiling)
     c.setFillColor(C_BLACK)
-    c.rect(ML, CH + MB - 2, CW, 22, fill=1, stroke=0)
+    c.rect(ML, CH + MB - 24, CW, 22, fill=1, stroke=0)
     c.setFillColor(white)
     c.setFont("MonoB", 9)
-    c.drawCentredString(PAGE_W / 2, CH + MB + 6, "[ THE ANTI-JARGON MANIFESTO ]")
+    c.drawCentredString(PAGE_W / 2, CH + MB - 14, "[ THE ANTI-JARGON MANIFESTO ]")
 
     manifesto = [
         ("I DECLARE", 14, "HelvB"),
@@ -345,7 +345,7 @@ def draw_manifesto_page(c, page_num):
         ("Date:   _______________", 9, "HelvI"),
     ]
 
-    y = CH + MB - 32
+    y = CH + MB - 36
     for text, size, font in manifesto:
         if not text:
             y -= 6
@@ -448,9 +448,10 @@ def draw_progress_tracker_page(c, page_num):
     cols = 5
     rows = 19
     cell_w = CW / (cols + 0.5)
-    cell_h = (CH - 55) / (rows + 1)
-    gx = ML + cell_w * 0.25
     gy_start = CH + MB - 45
+    # cell_h sized so the last row clears the legend (ly = MB+16) by 20pt
+    cell_h = (gy_start - MB - 36 - (rows - 1) * 2) / rows
+    gx = ML + cell_w * 0.25
 
     for row in range(rows):
         gy = gy_start - row * (cell_h + 2)
@@ -476,7 +477,7 @@ def draw_progress_tracker_page(c, page_num):
         c.drawCentredString(db_x + cell_w * 0.4, db_y + 3, f"D{row+1:02d}")
 
     # Legend
-    ly = MB + 14
+    ly = MB + 16
     c.setFont("Mono", 6.5)
     c.setFillColor(C_MID)
     c.drawString(ML, ly, "S## = Session   D## = Weekly Debrief   "
@@ -495,9 +496,9 @@ def draw_session_page(c, session_num, page_num):
     w = CW
 
     # Section heights (% of content height)
-    h_head   = total_h * 0.095
+    h_head   = total_h * 0.108
     h_s1     = total_h * 0.145
-    h_s2     = total_h * 0.330
+    h_s2     = total_h * 0.317
     h_s3     = total_h * 0.235
     h_s4     = total_h * 0.105
     h_bonus  = total_h * 0.090
@@ -533,10 +534,27 @@ def draw_session_page(c, session_num, page_num):
     c.setFont("Mono", 6.5)
     c.drawString(x0 + badge_w + 5, y_head + h_head - 11, f"WK {week:02d}")
 
+    # Progress bar (top-right, same badge row)
+    pct   = session_num / TOTAL_SESSIONS
+    bar_w = 76
+    bar_h = 5
+    bar_x = x0 + w - bar_w - 5
+    bar_y = y_head + h_head - 13
+    c.setFillColor(C_PALE)
+    c.rect(bar_x, bar_y, bar_w, bar_h, fill=1, stroke=0)
+    c.setFillColor(C_MID)
+    c.rect(bar_x, bar_y, bar_w * pct, bar_h, fill=1, stroke=0)
+    c.setStrokeColor(C_LIGHT)
+    c.setLineWidth(0.3)
+    c.rect(bar_x, bar_y, bar_w, bar_h, fill=0, stroke=1)
+    c.setFont("Mono", 5.5)
+    c.setFillColor(C_LIGHT)
+    c.drawRightString(bar_x + bar_w, bar_y - 8, f"{session_num}/{TOTAL_SESSIONS}")
+
     # Field + Topic fields
     pad = 6
     mid = x0 + w / 2
-    row1_y = y_head + h_head - 28
+    row1_y = y_head + h_head - 32
     c.setFont("MonoB", 7.5)
     c.setFillColor(C_BLACK)
     c.drawString(x0 + pad, row1_y, "FIELD:")
@@ -547,7 +565,7 @@ def draw_session_page(c, session_num, page_num):
     c.line(mid + 36, row1_y + 2, x0 + w - pad, row1_y + 2)
 
     # Complexity + Date
-    row2_y = y_head + h_head - 44
+    row2_y = y_head + h_head - 50
     c.setFont("MonoB", 7.5)
     c.setFillColor(C_BLACK)
     c.drawString(x0 + pad, row2_y, "COMPLEXITY:")
@@ -556,10 +574,6 @@ def draw_session_page(c, session_num, page_num):
     c.setStrokeColor(C_RULE)
     c.setLineWidth(0.4)
     c.line(mid + 32, row2_y + 2, x0 + w - pad, row2_y + 2)
-
-    # Progress dots
-    progress_dots(c, x0 + w - 70, y_head + h_head - 50,
-                  total=TOTAL_SESSIONS, current=session_num)
 
     # ── STEP 1: JARGON BAN ───────────────────────────────────────────────────
     section_box(c, x0, y_s1, w, h_s1,
