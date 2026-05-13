@@ -207,8 +207,19 @@ def wordwrap(c, text, x, y, max_w, font, size, color, leading=11):
 
 # ── Panels ────────────────────────────────────────────────────────────────────
 
-def draw_back(c, x0, y0, w, h):
-    # Background
+def draw_back(c, x0, y0, w, h, img_path=None):
+    if img_path:
+        # Extend into bleed on 3 outer sides (left, top, bottom).
+        # Right side = spine fold, flush with spine panel.
+        draw_x = x0 - BLEED      # bleed beyond left trim
+        draw_y = y0 - BLEED      # bleed below trim
+        draw_w = w + BLEED        # bleed to the left
+        draw_h = h + 2 * BLEED   # bleed top + bottom
+        c.drawImage(img_path, draw_x, draw_y, width=draw_w, height=draw_h,
+                    preserveAspectRatio=False, mask='auto')
+        return
+
+    # ── Fallback programmatic back cover (used if no image supplied) ──
     c.setFillColor(NAVY)
     c.rect(x0, y0, w, h, fill=1, stroke=0)
     stars(c, x0, y0, w, h, seed=17, n=140)
@@ -480,17 +491,18 @@ def trim_guides(c):
 
 def generate_cover(filename="Cover_SAT_GRE_Workbook.pdf",
                    front_image=None,
+                   back_image=None,
                    guides=True):
     cv = canvas.Canvas(filename, pagesize=(TOTAL_W, TOTAL_H))
     cv.setTitle("Advanced SAT/GRE Vocabulary Workbook — Full Paperback Cover")
     cv.setAuthor("Lexiquent Press")
 
-    # Full bleed background (navy fills any gaps at edges)
+    # Full bleed background (navy fills any gaps at seams)
     cv.setFillColor(NAVY)
     cv.rect(0, 0, TOTAL_W, TOTAL_H, fill=1, stroke=0)
 
-    # Panels
-    draw_back( cv, BK_X,      CT_Y, BK_W,   CT_H)
+    # Panels — PNG images used when supplied, programmatic fallback otherwise
+    draw_back( cv, BK_X,      CT_Y, BK_W,   CT_H, img_path=back_image)
     draw_spine(cv, X_SPINE_L, CT_Y, SPINE_W, CT_H)
     draw_front(cv, FR_X,      CT_Y, FR_W,   CT_H, img_path=front_image)
 
@@ -502,7 +514,8 @@ def generate_cover(filename="Cover_SAT_GRE_Workbook.pdf",
     print(f"Generated : {filename}")
     print(f"Canvas    : {TOTAL_W/IN:.4f}\" × {TOTAL_H/IN:.4f}\"")
     print(f"Spine     : {SPINE_W/IN:.4f}\" ({SPINE_W:.2f} pt)")
-    print(f"Front img : {front_image or 'none (fallback navy)'}")
+    print(f"Front img : {front_image or 'none (fallback)'}")
+    print(f"Back  img : {back_image  or 'none (fallback)'}")
     print(f"Guides    : {'YES — remove before KDP upload' if guides else 'OFF'}")
 
 
@@ -510,6 +523,14 @@ FRONT_COVER_IMAGE = (
     "/root/.claude/uploads/e38dc713-bbc2-44cb-9057-6a670caf3951/"
     "e5a597dd-1000010432.png"
 )
+BACK_COVER_IMAGE = (
+    "/root/.claude/uploads/e38dc713-bbc2-44cb-9057-6a670caf3951/"
+    "68458b18-1000010434.png"
+)
 
 if __name__ == "__main__":
-    generate_cover(front_image=FRONT_COVER_IMAGE, guides=True)
+    generate_cover(
+        front_image=FRONT_COVER_IMAGE,
+        back_image=BACK_COVER_IMAGE,
+        guides=True,
+    )
