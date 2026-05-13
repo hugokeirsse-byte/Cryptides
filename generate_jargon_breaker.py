@@ -444,22 +444,24 @@ def draw_progress_tracker_page(c, page_num):
     c.drawCentredString(PAGE_W / 2, CH + MB - 28,
                         "Shade each cell when you complete a session.")
 
-    # Grid: 5 columns × 19 rows  + debrief rows
-    cols = 5
-    rows = 19
-    cell_w = CW / (cols + 0.5)
+    # Grid: 5 session columns + 1 debrief column, all fitting inside CW
+    cols    = 5
+    rows    = 19
+    col_gap = 2
+    # cell_w: fits 5 session cols + 0.8×debrief col within CW
+    cell_w  = (CW - cols * col_gap - 1) / (cols + 0.8)   # ≈ 56 pt
+    gx      = ML
     gy_start = CH + MB - 45
-    # cell_h sized so the last row clears the legend (ly = MB+16) by 20pt
-    cell_h = (gy_start - MB - 36 - (rows - 1) * 2) / rows
-    gx = ML + cell_w * 0.25
+    # cell_h: last row clears the legend by ~20 pt
+    cell_h  = (gy_start - MB - 36 - (rows - 1) * col_gap) / rows
 
     for row in range(rows):
-        gy = gy_start - row * (cell_h + 2)
+        gy = gy_start - row * (cell_h + col_gap)
         for col in range(cols):
             session = row * cols + col + 1
             if session > TOTAL_SESSIONS:
                 break
-            cx_ = gx + col * (cell_w + 2)
+            cx_ = gx + col * (cell_w + col_gap)
             c.setLineWidth(0.4)
             c.setStrokeColor(C_MID)
             c.rect(cx_, gy - cell_h, cell_w, cell_h, fill=0, stroke=1)
@@ -467,8 +469,8 @@ def draw_progress_tracker_page(c, page_num):
             c.setFillColor(C_LIGHT)
             c.drawCentredString(cx_ + cell_w / 2, gy - cell_h + 3,
                                 f"S{session:02d}")
-        # Debrief marker after each row of 5
-        db_x = gx + cols * (cell_w + 2) + 3
+        # Debrief marker flush after the 5th session column (no extra gap)
+        db_x = gx + cols * (cell_w + col_gap)
         db_y = gy - cell_h
         c.setFillColor(C_BLACK)
         c.rect(db_x, db_y, cell_w * 0.8, cell_h, fill=0, stroke=1)
@@ -496,9 +498,9 @@ def draw_session_page(c, session_num, page_num):
     w = CW
 
     # Section heights (% of content height)
-    h_head   = total_h * 0.108
+    h_head   = total_h * 0.130   # taller header keeps COMPLEXITY row clear of Step-1 tab
     h_s1     = total_h * 0.145
-    h_s2     = total_h * 0.317
+    h_s2     = total_h * 0.295
     h_s3     = total_h * 0.235
     h_s4     = total_h * 0.105
     h_bonus  = total_h * 0.090
