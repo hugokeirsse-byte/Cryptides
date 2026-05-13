@@ -10,6 +10,7 @@ import math
 import random
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor, black, white
+from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import inch as IN
 
 # ── Dimensions (all in points, 1in = 72pt) ───────────────────────────────────
@@ -434,84 +435,21 @@ def draw_spine(c, x0, y0, w, h):
     c.restoreState()
 
 
-def draw_front(c, x0, y0, w, h):
-    # Background
-    c.setFillColor(NAVY)
-    c.rect(x0, y0, w, h, fill=1, stroke=0)
-    stars(c, x0, y0, w, h, seed=42, n=200)
-
-    mid_x = x0 + w / 2
-
-    # Neural brain (centered vertically around 44% up)
-    neural_net(c, cx=x0 + w * 0.52, cy=y0 + h * 0.44,
-               rx=w * 0.41, ry=h * 0.29, seed=77)
-
-    # ── TOP TAGLINE ──────────────────────────────────────────────────────
-    c.setFont("Helvetica-BoldOblique", 7.5)
-    c.setFillColor(GOLD)
-    c.drawCentredString(mid_x, y0 + h - 26, "MASTER 525 HIGH-LEVEL WORDS IN 105 DAYS")
-
-    # ── MAIN TITLE ───────────────────────────────────────────────────────
-    ty = y0 + h - 56
-
-    c.setFont("Helvetica-Bold", 21)
-    c.setFillColor(W_PURE)
-    c.drawCentredString(mid_x, ty, "ADVANCED SAT / GRE")
-    ty -= 37
-
-    c.setFont("Helvetica-Bold", 38)
-    c.setFillColor(GOLD)
-    c.drawCentredString(mid_x, ty, "VOCABULARY")
-    ty -= 31
-
-    c.setFont("Helvetica-Bold", 27)
-    c.setFillColor(W_PURE)
-    c.drawCentredString(mid_x, ty, "WORKBOOK")
-
-    # ── BOTTOM ───────────────────────────────────────────────────────────
-    bot = y0 + 28
-
-    # Gold rule + diamond
-    rule_y = bot + 68
-    c.setStrokeColor(GOLD)
-    c.setLineWidth(0.5)
-    c.line(x0 + w * 0.14, rule_y, x0 + w * 0.86, rule_y)
-
-    c.saveState()
-    c.setFillColor(GOLD)
-    c.translate(mid_x, rule_y)
-    c.rotate(45)
-    dm = 4
-    c.rect(-dm / 2, -dm / 2, dm, dm, fill=1, stroke=0)
-    c.restoreState()
-
-    # Subtitle
-    c.setFont("Helvetica-Oblique", 9)
-    c.setFillColor(W_DIM)
-    c.drawCentredString(mid_x, rule_y - 18,
-                        "A Spaced Repetition System for Lasting Mastery")
-
-    # 4 badges
-    badges = ["NEW WORDS", "24H RECALL", "7-DAY REVIEW", "30-DAY MASTERY"]
-    n      = len(badges)
-    pad    = 20
-    bw     = (w - 2 * pad - (n - 1) * 5) / n
-    bh     = 16
-    bx     = x0 + pad
-    by     = bot + 16
-
-    for badge in badges:
-        c.saveState()
-        c.setFillColorRGB(0.83, 0.69, 0.22, 0.16)
-        c.roundRect(bx, by, bw, bh, 3, fill=1, stroke=0)
-        c.setStrokeColor(GOLD)
-        c.setLineWidth(0.45)
-        c.roundRect(bx, by, bw, bh, 3, fill=0, stroke=1)
-        c.restoreState()
-        c.setFont("Helvetica-Bold", 6.5)
-        c.setFillColor(GOLD)
-        c.drawCentredString(bx + bw / 2, by + 5, badge)
-        bx += bw + 5
+def draw_front(c, x0, y0, w, h, img_path=None):
+    """Place the actual front-cover PNG, scaled to fill the panel + bleed."""
+    if img_path:
+        # Extend the image into the bleed on the 3 outer sides (right, top, bottom).
+        # The spine side (left edge = x0) is already flush with the spine panel.
+        draw_x = x0
+        draw_y = y0 - BLEED          # bleed below trim
+        draw_w = w + BLEED           # bleed beyond right trim
+        draw_h = h + 2 * BLEED      # bleed above + below trim
+        c.drawImage(img_path, draw_x, draw_y, width=draw_w, height=draw_h,
+                    preserveAspectRatio=False, mask='auto')
+    else:
+        # Fallback: solid navy if no image provided
+        c.setFillColor(NAVY)
+        c.rect(x0, y0, w, h, fill=1, stroke=0)
 
 
 # ── Trim / bleed guide lines ──────────────────────────────────────────────────
@@ -540,19 +478,21 @@ def trim_guides(c):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-def generate_cover(filename="Cover_SAT_GRE_Workbook.pdf", guides=True):
+def generate_cover(filename="Cover_SAT_GRE_Workbook.pdf",
+                   front_image=None,
+                   guides=True):
     cv = canvas.Canvas(filename, pagesize=(TOTAL_W, TOTAL_H))
     cv.setTitle("Advanced SAT/GRE Vocabulary Workbook — Full Paperback Cover")
     cv.setAuthor("Lexiquent Press")
 
-    # Full bleed background
+    # Full bleed background (navy fills any gaps at edges)
     cv.setFillColor(NAVY)
     cv.rect(0, 0, TOTAL_W, TOTAL_H, fill=1, stroke=0)
 
     # Panels
-    draw_back( cv, BK_X, CT_Y, BK_W, CT_H)
+    draw_back( cv, BK_X,      CT_Y, BK_W,   CT_H)
     draw_spine(cv, X_SPINE_L, CT_Y, SPINE_W, CT_H)
-    draw_front(cv, FR_X, CT_Y, FR_W, CT_H)
+    draw_front(cv, FR_X,      CT_Y, FR_W,   CT_H, img_path=front_image)
 
     if guides:
         trim_guides(cv)
@@ -562,8 +502,14 @@ def generate_cover(filename="Cover_SAT_GRE_Workbook.pdf", guides=True):
     print(f"Generated : {filename}")
     print(f"Canvas    : {TOTAL_W/IN:.4f}\" × {TOTAL_H/IN:.4f}\"")
     print(f"Spine     : {SPINE_W/IN:.4f}\" ({SPINE_W:.2f} pt)")
+    print(f"Front img : {front_image or 'none (fallback navy)'}")
     print(f"Guides    : {'YES — remove before KDP upload' if guides else 'OFF'}")
 
 
+FRONT_COVER_IMAGE = (
+    "/root/.claude/uploads/e38dc713-bbc2-44cb-9057-6a670caf3951/"
+    "e5a597dd-1000010432.png"
+)
+
 if __name__ == "__main__":
-    generate_cover(guides=True)
+    generate_cover(front_image=FRONT_COVER_IMAGE, guides=True)
